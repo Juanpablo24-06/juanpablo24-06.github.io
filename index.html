@@ -25,11 +25,16 @@
     <main class="container">
       <section id="login-view" class="card">
         <h2>Ingresar</h2>
-        <form id="login-form">
-          <input type="email" id="email" placeholder="tu@correo.com" required />
-          <button type="submit">Enviar enlace</button>
+        <form id="viewer-form">
+          <input type="password" id="pw-viewer" placeholder="Contraseña" />
+          <button type="submit">Entrar</button>
         </form>
-        <p id="auth-msg"></p>
+        <button id="show-admin-btn" type="button">Entrar como editor</button>
+        <form id="admin-form" hidden>
+          <input type="password" id="pw-admin" placeholder="Contraseña editor" />
+          <button type="submit">Entrar</button>
+        </form>
+        <div id="auth-msg"></div>
       </section>
 
       <div id="app-view" hidden>
