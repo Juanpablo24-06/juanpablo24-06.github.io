@@ -3,109 +3,37 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Informe de situación académica</title>
-    <meta name="description" content="Sitio estático publicado con GitHub Pages para presentar el informe de situación académica." />
+    <title>Ruta de estudios</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="site-header">
-      <div class="container">
-        <h1>Informe de situación académica</h1>
-        <p class="subtitle">Subtítulo breve aquí</p>
-        <nav class="main-nav">
-          <a href="#inicio">Inicio</a>
-          <a href="#hoy">Hoy</a>
-          <a href="#semana">Semana</a>
-          <a href="#examenes">Exámenes</a>
-          <a href="#ruta">Ruta</a>
-        </nav>
-        <button id="signout-btn" hidden>Salir</button>
-      </div>
+    <header class="topbar">
+      <h1>Ruta de estudios</h1>
+      <button id="logout-btn" class="btn" hidden>Cerrar sesión</button>
     </header>
-    <main class="container">
-      <section id="login-view" class="card">
-        <h2>Ingresar</h2>
-        <form id="viewer-form">
-          <input type="password" id="pw-viewer" placeholder="Contraseña" />
-          <button type="submit">Entrar</button>
+
+    <main class="main container">
+      <section id="login-view" class="panel">
+        <form id="viewer-form" class="login-form">
+          <input type="password" id="pw-viewer" placeholder="Contraseña" required />
+          <button type="submit" class="btn">Entrar</button>
         </form>
-        <button id="show-admin-btn" type="button">Entrar como editor</button>
-        <form id="admin-form" hidden>
-          <input type="password" id="pw-admin" placeholder="Contraseña editor" />
-          <button type="submit">Entrar</button>
+        <button id="show-admin" class="link-btn" type="button">Entrar como editor</button>
+        <form id="admin-form" class="login-form" hidden>
+          <input type="password" id="pw-admin" placeholder="Contraseña editor" required />
+          <button type="submit" class="btn">Entrar</button>
         </form>
-        <div id="auth-msg"></div>
+        <p id="auth-msg" class="msg"></p>
       </section>
 
-      <div id="app-view" hidden>
-        <section id="inicio" class="card">
-          <h2>Resumen</h2>
-          <ul>
-            <li></li>
-            <li></li>
-            <li></li>
-          </ul>
-        </section>
-
-        <section class="card">
-          <h2>¿Qué hice hasta ahora?</h2>
-          <p></p>
-        </section>
-
-        <section id="hoy" class="card">
-          <h2>¿Dónde estoy hoy?</h2>
-          <p></p>
-        </section>
-
-        <section id="semana" class="card">
-          <h2>¿Cómo se distribuye mi semana?</h2>
-          <div class="schedule-wrapper">
-            <div id="schedule" class="schedule-grid"></div>
-          </div>
-        </section>
-
-        <section id="examenes" class="card">
-          <h2>Fechas de exámenes</h2>
-          <div class="exam-subject">
-            <h3>Análisis Matemático</h3>
-            <p></p>
-          </div>
-          <div class="exam-subject">
-            <h3>Álgebra lineal</h3>
-            <p></p>
-          </div>
-          <div class="exam-subject">
-            <h3>Física de los sistemas de partículas</h3>
-            <p></p>
-          </div>
-          <div class="exam-subject">
-            <h3>Química</h3>
-            <p></p>
-          </div>
-        </section>
-
-        <section id="ruta" class="card">
-          <h2>¿Cuál es mi ruta de estudios?</h2>
-          <p class="legend">✓ Aprobada · ■ Cursando · ● Regular con final · ○ Futura · ! A recursar</p>
-          <div id="ruta-estudios"></div>
-        </section>
-      </div>
+      <section id="app-view" hidden>
+        <div id="legend" class="legend-bar"></div>
+        <div id="years" class="years"></div>
+      </section>
     </main>
 
-    <footer class="site-footer">
-      <div class="container">
-        <small>Última actualización: <span id="updated"></span></small>
-      </div>
-    </footer>
+    <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 
-    <script src="assets/js/schedule.js"></script>
     <script type="module" src="assets/js/app.js"></script>
-<script>
-  document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-</script>
   </body>
 </html>
