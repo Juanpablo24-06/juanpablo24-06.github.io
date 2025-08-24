@@ -19,62 +19,72 @@
           <a href="#examenes">Exámenes</a>
           <a href="#ruta">Ruta</a>
         </nav>
+        <button id="signout-btn" hidden>Salir</button>
       </div>
     </header>
-
     <main class="container">
-      <section id="inicio" class="card">
-        <h2>Resumen</h2>
-        <ul>
-          <li></li>
-          <li></li>
-          <li></li>
-        </ul>
+      <section id="login-view" class="card">
+        <h2>Ingresar</h2>
+        <form id="login-form">
+          <input type="email" id="login-email" placeholder="tu@correo.com" required />
+          <button type="submit">Enviar enlace</button>
+        </form>
+        <p id="login-msg"></p>
       </section>
 
-      <section class="card">
-        <h2>¿Qué hice hasta ahora?</h2>
-        <p></p>
-      </section>
+      <div id="app-view" hidden>
+        <section id="inicio" class="card">
+          <h2>Resumen</h2>
+          <ul>
+            <li></li>
+            <li></li>
+            <li></li>
+          </ul>
+        </section>
 
-      <section id="hoy" class="card">
-        <h2>¿Dónde estoy hoy?</h2>
-        <p></p>
-      </section>
-
-      <section id="semana" class="card">
-        <h2>¿Cómo se distribuye mi semana?</h2>
-        <div class="schedule-wrapper">
-          <div id="schedule" class="schedule-grid"></div>
-        </div>
-      </section>
-
-      <section id="examenes" class="card">
-        <h2>Fechas de exámenes</h2>
-        <div class="exam-subject">
-          <h3>Análisis Matemático</h3>
+        <section class="card">
+          <h2>¿Qué hice hasta ahora?</h2>
           <p></p>
-        </div>
-        <div class="exam-subject">
-          <h3>Álgebra lineal</h3>
-          <p></p>
-        </div>
-        <div class="exam-subject">
-          <h3>Física de los sistemas de partículas</h3>
-          <p></p>
-        </div>
-        <div class="exam-subject">
-          <h3>Química</h3>
-          <p></p>
-        </div>
-      </section>
+        </section>
 
-      <section id="ruta" class="card">
-        <h2>¿Cuál es mi ruta de estudios?</h2>
-        <p class="legend">✓ Aprobada · ■ Cursando · ● Regular con final · ○ Futura · ! A recursar</p>
-        <div id="ruta-estudios"></div>
+        <section id="hoy" class="card">
+          <h2>¿Dónde estoy hoy?</h2>
+          <p></p>
+        </section>
 
-      </section>
+        <section id="semana" class="card">
+          <h2>¿Cómo se distribuye mi semana?</h2>
+          <div class="schedule-wrapper">
+            <div id="schedule" class="schedule-grid"></div>
+          </div>
+        </section>
+
+        <section id="examenes" class="card">
+          <h2>Fechas de exámenes</h2>
+          <div class="exam-subject">
+            <h3>Análisis Matemático</h3>
+            <p></p>
+          </div>
+          <div class="exam-subject">
+            <h3>Álgebra lineal</h3>
+            <p></p>
+          </div>
+          <div class="exam-subject">
+            <h3>Física de los sistemas de partículas</h3>
+            <p></p>
+          </div>
+          <div class="exam-subject">
+            <h3>Química</h3>
+            <p></p>
+          </div>
+        </section>
+
+        <section id="ruta" class="card">
+          <h2>¿Cuál es mi ruta de estudios?</h2>
+          <p class="legend">✓ Aprobada · ■ Cursando · ● Regular con final · ○ Futura · ! A recursar</p>
+          <div id="ruta-estudios"></div>
+        </section>
+      </div>
     </main>
 
     <footer class="site-footer">
@@ -84,12 +94,7 @@
     </footer>
 
     <script src="assets/js/schedule.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-      const SUPABASE_URL = "https://njzzuqdnigafpymgvizr.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qenp1cWRuaWdhZnB5bWd2aXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNTE1NjQsImV4cCI6MjA3MTYyNzU2NH0.eq_o2LFRxX2tLMvXpkc-jJFuzIX_orjBFAoWWyAVqt8";
-    </script>
-    <script src="assets/js/plan.js" defer></script>
+    <script type="module" src="assets/js/app.js"></script>
 <script>
   document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', {
     year: 'numeric',
