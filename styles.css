@@ -4,7 +4,11 @@
   --panel: #111318;
   --text: #e5e7eb;
   --muted: #9ca3af;
-  --accent: #4f46e5;
+  --ok: #16a34a;
+  --info: #2563eb;
+  --warn: #facc15;
+  --err: #dc2626;
+  --accent: var(--info);
   --border: #1f2430;
 }
 
@@ -121,101 +125,111 @@ a:hover { text-decoration: underline; }
 #ruta-estudios {
   margin-top: 16px;
 }
-.plan-year {
-  margin-bottom: 24px;
+.year-panel {
+  margin-bottom: 32px;
+  padding: 16px;
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow: hidden;
 }
-.plan-year > summary {
-  list-style: none;
-  padding: 12px 16px;
-  background: #1a1d24;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.year-panel h3 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
 }
-.plan-year > summary::-webkit-details-marker { display: none; }
-.year-steps {
-  display: flex;
-  flex: 1;
-  margin-left: 16px;
-  gap: 8px;
-}
-.year-steps .step {
-  position: relative;
-  flex: 1;
-  background: var(--border);
+.timeline {
   height: 4px;
+  background: var(--border);
+  margin-bottom: 16px;
   border-radius: 2px;
 }
-.year-steps .step::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--muted);
-}
-.cuatimestres {
+.cuat-grid {
   display: flex;
   gap: 16px;
-  padding: 16px;
+  flex-wrap: wrap;
 }
-.cuatrimestre {
+.cuat-panel {
   flex: 1;
+  min-width: 220px;
 }
-.cuatrimestre h4 {
+.cuat-panel h4 {
   margin-top: 0;
 }
-.materia-pill {
+.subject-card {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
-  border-radius: 9999px;
-  background: #1f2430;
-  box-shadow: 0 2px 4px rgba(0,0,0,.3);
+  align-items: center;
+  padding: 6px 8px;
   margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
 }
-.materia-pill select {
+.estado-pills {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.estado-pills[aria-disabled="true"] {
+  opacity: .6;
+  cursor: not-allowed;
+}
+.estado-pills button {
+  flex: 1;
+  padding: 4px 6px;
   background: transparent;
   border: none;
-  color: inherit;
-  font-size: 0.875rem;
-}
-.materia-pill select option {
-  color: #000;
-}
-.materia-pill.estado-aprobada { background: #2e7d32; color: #fff; }
-.materia-pill.estado-cursando { background: #1565c0; color: #fff; }
-.materia-pill.estado-regular { background: #ffb300; color: #000; }
-.materia-pill.estado-futura { background: #424242; color: #fff; }
-.materia-pill.estado-recursar { background: #c62828; color: #fff; }
-#ruta-estudios button {
-  margin-top: 16px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  background: #333;
   color: var(--text);
+  font-size: 12px;
   cursor: pointer;
 }
-#ruta-estudios button:hover {
-  background: #444;
+.estado-pills button:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
 }
+.estado-pills button[aria-checked="true"].aprobada { background: var(--ok); }
+.estado-pills button[aria-checked="true"].cursando { background: var(--info); }
+.estado-pills button[aria-checked="true"].regular { background: var(--warn); color: #000; }
+.estado-pills button[aria-checked="true"].futura { background: transparent; }
+.estado-pills button[aria-checked="true"].recursar { background: var(--err); }
+
+/* Skeleton loaders */
+.skeleton {
+  background: var(--border);
+  height: 24px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: .4; }
+  50% { opacity: 1; }
+}
+
+/* Toasts */
+.toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  color: var(--text);
+  z-index: 1000;
+}
+.toast.error {
+  background: var(--err);
+}
+
 @media (max-width: 600px) {
-  .plan-year > summary::-webkit-details-marker { display: initial; }
-  .cuatimestres {
+  .cuat-grid {
     flex-direction: column;
   }
 }
 
-/* Login y toasts */
+/* Login */
 #login-view form {
   display: flex;
   gap: 8px;
@@ -223,16 +237,4 @@ a:hover { text-decoration: underline; }
 #login-view input {
   flex: 1;
   padding: 8px;
-}
-.toast {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: var(--text);
-  padding: 8px 16px;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.3);
-  z-index: 1000;
 }
