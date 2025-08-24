@@ -1,11 +1,11 @@
 // app.js - Manejo de autenticación y plan de estudios
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// --- Constantes de Supabase (pegar aquí las 5 credenciales) ---
+// --- Constantes de Supabase (reemplaza con las tuyas) ---
 const SUPABASE_URL = 'https://njzzuqdnigafpymgvizr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qenp1cWRuaWdhZnB5bWd2aXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNTE1NjQsImV4cCI6MjA3MTYyNzU2NH0.eq_o2LFRxX2tLMvXpkc-jJFuzIX_orjBFAoWWyAVqt8';
 const VIEWER_EMAIL = 'viewer@fiuba.local';
-const ADMIN_EMAIL = 'Juanpablo20240604@gmail.com';
+const ADMIN_EMAIL = 'juanpablo20240604@gmail.com';
 const ADMIN_UUID = 'e6c2299b-a401-40b2-8af9-550cd0d8c2cc';
 
 // Inicializa el cliente
@@ -22,7 +22,6 @@ const states = [
 
 // Referencias y variables de estado
 const subjectElements = new Map();
-const pending = new Map(); // timers para debounce
 let planChannel = null;
 let isAdmin = false;
 
@@ -32,23 +31,12 @@ const adminForm = document.getElementById('admin-form');
 const showAdminBtn = document.getElementById('show-admin-btn');
 const authMsg = document.getElementById('auth-msg');
 const signOutBtn = document.getElementById('signout-btn');
-const toast = document.getElementById('toast');
 
 function showError(msg) {
   authMsg.textContent = msg;
 }
 function clearError() {
   authMsg.textContent = '';
-}
-
-function showToast(msg, isError = false) {
-  if (!toast) return;
-  toast.textContent = msg;
-  toast.classList.toggle('error', isError);
-  toast.hidden = false;
-  setTimeout(() => {
-    toast.hidden = true;
-  }, 1500);
 }
 
 // Muestra/oculta vistas
@@ -63,11 +51,10 @@ function showApp() {
   signOutBtn.hidden = false;
 }
 
-// Deshabilita o habilita controles de estado
+// Deshabilita o habilita selects
 function setEditing(enable) {
-  subjectElements.forEach(({ group, buttons }) => {
-    group.setAttribute('aria-disabled', enable ? 'false' : 'true');
-    buttons.forEach((b) => (b.disabled = !enable));
+  subjectElements.forEach(({ select }) => {
+    select.disabled = !enable;
   });
 }
 
@@ -76,7 +63,6 @@ async function fetchCourses() {
   const { data, error } = await supabase
     .from('courses')
     .select('id,name,year,cuat,pos')
-    .gte('year', 2)
     .order('year')
     .order('cuat')
     .order('pos');
@@ -88,7 +74,6 @@ async function fetchCourses() {
 }
 
 async function loadPlan() {
-  renderSkeleton();
   const courses = await fetchCourses();
   renderCourses(courses);
   const { data: entries, error } = await supabase
@@ -100,31 +85,15 @@ async function loadPlan() {
     return;
   }
   (entries || []).forEach((row) => {
-    applyStatus(row.course_id, row.status);
+    const elem = subjectElements.get(row.course_id);
+    if (!elem) return;
+    elem.select.value = row.status;
+    elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
+    elem.pill.classList.add(`estado-${row.status}`);
   });
 }
 
-function applyStatus(courseId, status) {
-  const elem = subjectElements.get(courseId);
-  if (!elem) return;
-  elem.buttons.forEach((b) => {
-    const checked = b.dataset.value === status;
-    b.setAttribute('aria-checked', checked ? 'true' : 'false');
-  });
-}
-
-function renderSkeleton() {
-  const container = document.getElementById('ruta-estudios');
-  if (!container) return;
-  container.innerHTML = '';
-  for (let i = 0; i < 5; i++) {
-    const s = document.createElement('div');
-    s.className = 'skeleton';
-    container.appendChild(s);
-  }
-}
-
-// Agrupa cursos por año y cuatrimestre y dibuja las tarjetas
+// Renderiza cursos y sus selects
 function renderCourses(courses) {
   const container = document.getElementById('ruta-estudios');
   if (!container) return;
@@ -138,100 +107,73 @@ function renderCourses(courses) {
     grouped[c.year][c.cuat].push(c);
   });
 
-  const cuatLabels = {
-    3: 'Tercer',
-    4: 'Cuarto',
-    5: 'Quinto',
-    6: 'Sexto',
-    7: 'Séptimo',
-    8: 'Octavo',
-    9: 'Noveno',
-    10: 'Décimo',
-    11: 'Undécimo'
-  };
-
   Object.keys(grouped)
     .sort((a, b) => a - b)
     .forEach((year) => {
-      const yearPanel = document.createElement('div');
-      yearPanel.className = 'year-panel';
-      const h3 = document.createElement('h3');
-      h3.textContent = `Año ${year}`;
-      yearPanel.appendChild(h3);
-      const timeline = document.createElement('div');
-      timeline.className = 'timeline';
-      yearPanel.appendChild(timeline);
-      const cuatGrid = document.createElement('div');
-      cuatGrid.className = 'cuat-grid';
-
       const yearData = grouped[year];
-      Object.keys(yearData)
-        .sort((a, b) => a - b)
-        .forEach((cuat) => {
-          const cuatPanel = document.createElement('div');
-          cuatPanel.className = 'cuat-panel';
-          const h4 = document.createElement('h4');
-          h4.textContent = cuatLabels[cuat] || `Cuat. ${cuat}`;
-          cuatPanel.appendChild(h4);
-
-          yearData[cuat].forEach((course) => {
-            const card = document.createElement('div');
-            card.className = 'subject-card';
-            const name = document.createElement('span');
-            name.textContent = course.name;
-            card.appendChild(name);
-
-            const group = document.createElement('div');
-            group.className = 'estado-pills';
-            group.setAttribute('role', 'radiogroup');
-
-            const buttons = [];
-            states.forEach((s) => {
-              const btn = document.createElement('button');
-              btn.type = 'button';
-              btn.textContent = s.label;
-              btn.className = s.value;
-              btn.dataset.value = s.value;
-              btn.setAttribute('role', 'radio');
-              btn.setAttribute('aria-checked', 'false');
-              btn.addEventListener('click', () => {
-                if (!isAdmin) return;
-                applyStatus(course.id, s.value);
-                debounceSave(course.id, s.value);
-              });
-              group.appendChild(btn);
-              buttons.push(btn);
-            });
-
-            card.appendChild(group);
-            cuatPanel.appendChild(card);
-            subjectElements.set(course.id, { card, group, buttons });
-            applyStatus(course.id, 'futura');
+      const details = document.createElement('details');
+      details.className = 'plan-year';
+      details.open = true;
+      const summary = document.createElement('summary');
+      summary.className = 'year-header';
+      summary.textContent = `Año ${year}`;
+      const steps = document.createElement('div');
+      steps.className = 'year-steps';
+      const cuats = Object.keys(yearData).sort((a, b) => a - b);
+      cuats.forEach(() => {
+        const step = document.createElement('span');
+        step.className = 'step';
+        steps.appendChild(step);
+      });
+      summary.appendChild(steps);
+      details.appendChild(summary);
+      const grid = document.createElement('div');
+      grid.className = 'cuatimestres';
+      cuats.forEach((cuat) => {
+        const col = document.createElement('div');
+        col.className = 'cuatrimestre';
+        const h4 = document.createElement('h4');
+        h4.textContent = `Cuatr. ${cuat}`;
+        col.appendChild(h4);
+        yearData[cuat].forEach((course) => {
+          const pill = document.createElement('div');
+          pill.className = 'materia-pill estado-futura';
+          pill.dataset.courseId = course.id;
+          const span = document.createElement('span');
+          span.textContent = course.name;
+          pill.appendChild(span);
+          const select = document.createElement('select');
+          select.dataset.courseId = course.id;
+          states.forEach((st) => {
+            const opt = document.createElement('option');
+            opt.value = st.value;
+            opt.textContent = st.label;
+            select.appendChild(opt);
           });
-
-          cuatGrid.appendChild(cuatPanel);
+          select.value = 'futura';
+          select.disabled = !isAdmin;
+          select.addEventListener('change', async () => {
+            const status = select.value;
+            pill.classList.remove(...states.map((s) => `estado-${s.value}`));
+            pill.classList.add(`estado-${status}`);
+            try {
+              await upsertPlanEntry(course.id, status);
+            } catch (err) {
+              console.error('DB:', err);
+            }
+          });
+          pill.appendChild(select);
+          col.appendChild(pill);
+          subjectElements.set(course.id, { pill, select });
         });
-
-      yearPanel.appendChild(cuatGrid);
-      container.appendChild(yearPanel);
+        grid.appendChild(col);
+      });
+      details.appendChild(grid);
+      container.appendChild(details);
     });
 }
 
-function debounceSave(courseId, status) {
-  clearTimeout(pending.get(courseId));
-  const t = setTimeout(async () => {
-    try {
-      await upsertPlanEntry(courseId, status);
-      showToast('Guardado ✓');
-    } catch (err) {
-      console.error('DB:', err);
-      showToast('Error al guardar', true);
-    }
-  }, 250);
-  pending.set(courseId, t);
-}
-
-// Inserta/actualiza el plan en plan_entries usando upsert
+// Inserta/actualiza el plan
 async function upsertPlanEntry(courseId, status) {
   const { error } = await supabase
     .from('plan_entries')
@@ -255,7 +197,11 @@ function subscribeRealtime() {
         if (data.user_id !== ADMIN_UUID) return;
         const courseId = data.course_id;
         const status = payload.eventType === 'DELETE' ? 'futura' : data.status;
-        applyStatus(courseId, status);
+        const elem = subjectElements.get(courseId);
+        if (!elem) return;
+        elem.select.value = status;
+        elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
+        elem.pill.classList.add(`estado-${status}`);
         console.log('RT:', payload.eventType, courseId, status);
       }
     )
