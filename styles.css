@@ -188,6 +188,9 @@ a:hover { text-decoration: underline; }
   color: inherit;
   font-size: 0.875rem;
 }
+.materia-pill select option {
+  color: #000;
+}
 .materia-pill.estado-aprobada { background: #2e7d32; color: #fff; }
 .materia-pill.estado-cursando { background: #1565c0; color: #fff; }
 .materia-pill.estado-regular { background: #ffb300; color: #000; }
