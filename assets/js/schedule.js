@@ -59,7 +59,7 @@ function buildSchedule(events) {
     const el = document.createElement('div');
     el.className = 'event';
     el.setAttribute('aria-label', `${evt.title}, ${evt.start}:00 a ${evt.end}:00`);
-    el.style.gridColumn = evt.day + 1;
+    el.style.gridColumn = evt.day + 2;
     el.style.gridRow = `${evt.start - 9 + 2} / ${evt.end - 9 + 2}`;
     el.innerHTML = `<strong>${evt.title}</strong><span>${evt.start}–${evt.end}</span>`;
     grid.appendChild(el);
