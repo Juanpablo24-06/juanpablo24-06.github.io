@@ -12,6 +12,8 @@ async function fetchAndRender() {
   const { data, error } = await supabase.from('events').select('*');
   if (error) {
     console.error('Error al cargar eventos', error);
+    // Render an empty schedule so the grid is visible even if Supabase fails
+    buildSchedule([]);
     return;
   }
   events = data || [];
