@@ -93,6 +93,13 @@ const states = [
   { value: "recursar", label: "! A recursar" }
 ];
 
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+const subjectElements = {};
+
 function slugify(str) {
   return str
     .toLowerCase()
@@ -102,9 +109,17 @@ function slugify(str) {
     .replace(/^-|-$/g, "");
 }
 
-function renderPlan() {
+async function renderPlan() {
   const container = document.getElementById("ruta-estudios");
   if (!container) return;
+
+  const { data: rows } = await supabaseClient
+    .from("subject_states")
+    .select("subject_slug,status");
+  const savedStates = {};
+  (rows || []).forEach((row) => {
+    savedStates[row.subject_slug] = row.status;
+  });
 
   plan.forEach((anio) => {
     const details = document.createElement("details");
@@ -152,25 +167,29 @@ function renderPlan() {
           select.appendChild(opt);
         });
 
-        const key = `planFiuba:v2024:${slugify(materia)}`;
-        const saved = localStorage.getItem(key) || "futura";
+        const key = slugify(materia);
+        const saved = savedStates[key] || "futura";
         select.value = saved;
         pill.classList.add(`estado-${saved}`);
         const initial = states.find((s) => s.value === saved);
         select.setAttribute("aria-label", `${materia} — ${initial.label}`);
 
-        select.addEventListener("change", () => {
+        select.addEventListener("change", async () => {
           pill.classList.remove(
             ...states.map((s) => `estado-${s.value}`)
           );
           pill.classList.add(`estado-${select.value}`);
-          localStorage.setItem(key, select.value);
+          await supabaseClient.from("subject_states").upsert({
+            subject_slug: key,
+            status: select.value,
+          });
           const label = states.find((s) => s.value === select.value).label;
           select.setAttribute("aria-label", `${materia} — ${label}`);
         });
 
         pill.appendChild(select);
         col.appendChild(pill);
+        subjectElements[key] = { pill, select, materia };
       });
 
       grid.appendChild(col);
@@ -182,21 +201,39 @@ function renderPlan() {
 
   const reset = document.createElement("button");
   reset.textContent = "Restablecer estados";
-  reset.addEventListener("click", () => {
+  reset.addEventListener("click", async () => {
     if (confirm("¿Borrar todos los estados guardados?")) {
-      plan.forEach((anio) => {
-        Object.values(anio.cuatimestres).forEach((materias) => {
-          materias.forEach((materia) => {
-            localStorage.removeItem(
-              `planFiuba:v2024:${slugify(materia)}`
-            );
-          });
-        });
-      });
+      await supabaseClient.from("subject_states").delete().neq("id", 0);
       location.reload();
     }
   });
   container.appendChild(reset);
+
+  supabaseClient
+    .channel("public:subject_states")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "subject_states" },
+      (payload) => {
+        const slug = payload.new
+          ? payload.new.subject_slug
+          : payload.old.subject_slug;
+        const status = payload.new ? payload.new.status : "futura";
+        const elem = subjectElements[slug];
+        if (!elem) return;
+        elem.pill.classList.remove(
+          ...states.map((s) => `estado-${s.value}`)
+        );
+        elem.pill.classList.add(`estado-${status}`);
+        elem.select.value = status;
+        const label = states.find((s) => s.value === status).label;
+        elem.select.setAttribute(
+          "aria-label",
+          `${elem.materia} — ${label}`
+        );
+      }
+    )
+    .subscribe();
 }
 
 renderPlan();
