@@ -73,6 +73,10 @@
         <h2>¿Cuál es mi ruta de estudios?</h2>
         <div class="ruta-diagrama"></div>
         <p class="legend">✓ Aprobada · ■ Cursando · ● Regular con final · ○ Futura · ! A recursar</p>
+<div class="ruta-diagrama"></div>
+<p class="legend">✓ Aprobada · ■ Cursando · ● Regular con final · ○ Futura · ! A recursar</p>
+<div id="ruta-estudios"></div>
+
       </section>
     </main>
 
@@ -83,6 +87,13 @@
     </footer>
 
     <script src="assets/js/schedule.js"></script>
+<script src="assets/js/schedule.js" defer></script>
+<script src="assets/js/plan.js" defer></script>
+<script>
+  document.getElementById('updated').textContent =
+    new Date().toLocaleDateString('es-AR', { year:'numeric', month:'long', day:'numeric' });
+</script>
+
     <script>
       document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', {
         year: 'numeric',

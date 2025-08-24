@@ -27,3 +27,9 @@ Los eventos de "Mi Horario Semanal" se editan en `assets/js/schedule.js`. Cada e
 - `start` y `end`: horas en formato 24 h.
 
 Agrega, elimina o modifica estos objetos para actualizar tu horario sin tocar el HTML.
+
+## Editar Ruta de estudios (plan.js)
+La sección "Ruta de estudios" se genera desde `assets/js/plan.js`.
+El arreglo `plan` lista los años, cuatrimestres y materias.
+Cada materia guarda su estado en `localStorage` con la clave `planFiuba:v2024:<slug>`.
+Usa el botón **Restablecer estados** para borrar los valores guardados.

@@ -116,3 +116,98 @@ a:hover { text-decoration: underline; }
     overflow-x: hidden;
   }
 }
+
+/* Ruta de estudios */
+#ruta-estudios {
+  margin-top: 16px;
+}
+.plan-year {
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.plan-year > summary {
+  list-style: none;
+  padding: 12px 16px;
+  background: #1a1d24;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.plan-year > summary::-webkit-details-marker { display: none; }
+.year-steps {
+  display: flex;
+  flex: 1;
+  margin-left: 16px;
+  gap: 8px;
+}
+.year-steps .step {
+  position: relative;
+  flex: 1;
+  background: var(--border);
+  height: 4px;
+  border-radius: 2px;
+}
+.year-steps .step::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.cuatimestres {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+.cuatrimestre {
+  flex: 1;
+}
+.cuatrimestre h4 {
+  margin-top: 0;
+}
+.materia-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  background: #1f2430;
+  box-shadow: 0 2px 4px rgba(0,0,0,.3);
+  margin-bottom: 8px;
+}
+.materia-pill select {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 0.875rem;
+}
+.materia-pill.estado-aprobada { background: #2e7d32; color: #fff; }
+.materia-pill.estado-cursando { background: #1565c0; color: #fff; }
+.materia-pill.estado-regular { background: #ffb300; color: #000; }
+.materia-pill.estado-futura { background: #424242; color: #fff; }
+.materia-pill.estado-recursar { background: #c62828; color: #fff; }
+#ruta-estudios button {
+  margin-top: 16px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #333;
+  color: var(--text);
+  cursor: pointer;
+}
+#ruta-estudios button:hover {
+  background: #444;
+}
+@media (max-width: 600px) {
+  .plan-year > summary::-webkit-details-marker { display: initial; }
+  .cuatimestres {
+    flex-direction: column;
+  }
+}
