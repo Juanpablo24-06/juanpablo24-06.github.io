@@ -1,11 +1,16 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Claves públicas de Supabase
 const SUPABASE_URL = 'https://njzzuqdnigafpymgvizr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qenp1cWRuaWdhZnB5bWd2aXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNTE1NjQsImV4cCI6MjA3MTYyNzU2NH0.eq_o2LFRxX2tLMvXpkc-jJFuzIX_orjBFAoWWyAVqt8';
 
 // Inicializa el cliente
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export let supabase;
+
+export function initSupabase() {
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return supabase;
+}
 
 // Estados posibles
 const states = [
@@ -35,31 +40,20 @@ export async function getCurrentUser() {
   return user;
 }
 
-// Maneja el retorno del magic link y la sesión
-export async function ensureSession() {
-  const params = new URLSearchParams(window.location.search);
+// Maneja el retorno del magic link
+export async function handleRedirect() {
+  const params = new URLSearchParams(location.search);
   const code = params.get('code');
   if (code) {
-    await supabase.auth.exchangeCodeForSession(window.location.href);
-    history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    await supabase.auth.exchangeCodeForSession(location.href);
+    history.replaceState({}, document.title, location.pathname + location.hash);
   }
+}
 
+// Obtiene la sesión actual
+export async function getSession() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    showApp();
-    await initialize();
-  } else {
-    showLogin();
-  }
-
-  supabase.auth.onAuthStateChange(async (_evt, sess) => {
-    if (sess) {
-      showApp();
-      await initialize();
-    } else {
-      showLogin();
-    }
-  });
+  return session;
 }
 
 // Descarga cursos
@@ -126,20 +120,17 @@ export function subscribeRealtime(user) {
 }
 
 // Renderiza el formulario de login
-export function renderLogin() {
-  const form = document.getElementById('login-form');
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: window.location.href }
-      });
-      const msg = document.getElementById('login-msg');
-      msg.textContent = error ? error.message : 'Revisa tu correo para continuar.';
+export function handleLogin() {
+  const btn = document.getElementById('btn-login');
+  btn?.addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: 'https://juanpablo24-06.github.io/' }
     });
-  }
+    const msg = document.getElementById('auth-error');
+    msg.textContent = error ? error.message : 'Enlace enviado. Revisa tu correo.';
+  });
   const signOutBtn = document.getElementById('signout-btn');
   signOutBtn?.addEventListener('click', () => supabase.auth.signOut());
 }
@@ -243,5 +234,22 @@ async function initialize() {
 }
 
 // Inicio
-renderLogin();
-ensureSession();
+initSupabase();
+handleLogin();
+await handleRedirect();
+const session = await getSession();
+if (session) {
+  showApp();
+  await initialize();
+} else {
+  showLogin();
+}
+
+supabase.auth.onAuthStateChange(async (_evt, sess) => {
+  if (sess) {
+    showApp();
+    await initialize();
+  } else {
+    showLogin();
+  }
+});
