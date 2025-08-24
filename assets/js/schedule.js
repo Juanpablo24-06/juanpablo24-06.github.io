@@ -1,3 +1,4 @@
+// Edita este arreglo para actualizar el calendario semanal
 const events = [
   { title: "Curso de Testing Master", day: 1, start: 9, end: 12 },
   { title: "Curso de Testing Master", day: 2, start: 9, end: 12 },
@@ -39,6 +40,17 @@ function buildSchedule() {
     label.style.gridColumn = 1;
     label.style.gridRow = h - 9 + 2;
     grid.appendChild(label);
+  }
+
+  // Grid slots for borders
+  for (let h = 9; h < 22; h++) {
+    for (let d = 0; d < 7; d++) {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      slot.style.gridColumn = d + 2;
+      slot.style.gridRow = h - 9 + 2;
+      grid.appendChild(slot);
+    }
   }
 
   // Events
