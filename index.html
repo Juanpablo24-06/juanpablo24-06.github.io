@@ -32,6 +32,12 @@
           <li>Próximos pasos</li>
         </ul>
       </article>
+      <article class="card" id="semana">
+        <h2>Mi Horario Semanal</h2>
+        <div class="schedule-wrapper">
+          <div class="schedule-grid" id="schedule"></div>
+        </div>
+      </article>
 
       <article class="card">
         <h2>Contacto</h2>
@@ -44,6 +50,8 @@
         <small>Actualizado el <span id="updated"></span> · Publicado con GitHub Pages</small>
       </div>
     </footer>
+
+    <script src="assets/js/schedule.js"></script>
 
     <script>
       document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', { year:'numeric', month:'long', day:'numeric' });
