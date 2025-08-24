@@ -1,28 +1,29 @@
-// Edita este arreglo para actualizar el calendario semanal
-const events = [
-  { title: "Curso de Testing Master", day: 1, start: 9, end: 12 },
-  { title: "Curso de Testing Master", day: 2, start: 9, end: 12 },
-  { title: "Curso de Testing Master", day: 3, start: 9, end: 12 },
-  { title: "Curso de Testing Master", day: 4, start: 9, end: 12 },
-  { title: "Curso de Testing Master", day: 5, start: 9, end: 12 },
-  { title: "Álgebra práctica", day: 1, start: 13, end: 15 },
-  { title: "Álgebra práctica", day: 3, start: 13, end: 15 },
-  { title: "Álgebra teórica", day: 1, start: 15, end: 17 },
-  { title: "Álgebra teórica", day: 3, start: 15, end: 17 },
-  { title: "Física de los sistemas de partículas", day: 2, start: 14, end: 17 },
-  { title: "Física de los sistemas de partículas", day: 4, start: 14, end: 17 },
-  { title: "Análisis matemático", day: 1, start: 20, end: 22 },
-  { title: "Química básica", day: 3, start: 20, end: 22 },
-  { title: "Análisis matemático II", day: 5, start: 20, end: 22 }
-];
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const SUPABASE_URL = "https://njzzuqdnigafpymgvizr.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qenp1cWRuaWdhZnB5bWd2aXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNTE1NjQsImV4cCI6MjA3MTYyNzU2NH0.eq_o2LFRxX2tLMvXpkc-jJFuzIX_orjBFAoWWyAVqt8";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+let events = [];
 
-function buildSchedule() {
+async function fetchAndRender() {
+  const { data, error } = await supabase.from('events').select('*');
+  if (error) {
+    console.error('Error al cargar eventos', error);
+    return;
+  }
+  events = data || [];
+  buildSchedule(events);
+}
+
+function buildSchedule(events) {
   const grid = document.getElementById('schedule');
   if (!grid) return;
+  grid.innerHTML = '';
 
-  // Day headers
+  // Encabezados de días
   days.forEach((day, index) => {
     const cell = document.createElement('div');
     cell.className = 'day-header';
@@ -32,7 +33,7 @@ function buildSchedule() {
     grid.appendChild(cell);
   });
 
-  // Time labels 9:00 to 22:00
+  // Etiquetas de horas de 9:00 a 22:00
   for (let h = 9; h <= 22; h++) {
     const label = document.createElement('div');
     label.className = 'time-label';
@@ -42,7 +43,7 @@ function buildSchedule() {
     grid.appendChild(label);
   }
 
-  // Grid slots for borders
+  // Cuadrícula para bordes
   for (let h = 9; h < 22; h++) {
     for (let d = 0; d < 7; d++) {
       const slot = document.createElement('div');
@@ -53,7 +54,7 @@ function buildSchedule() {
     }
   }
 
-  // Events
+  // Eventos
   events.forEach(evt => {
     const el = document.createElement('div');
     el.className = 'event';
@@ -65,4 +66,23 @@ function buildSchedule() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', buildSchedule);
+function setupRealtime() {
+  supabase
+    .channel('public:events')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+      fetchAndRender();
+    })
+    .subscribe();
+}
+
+window.addEvent = async function(title, day, start, end) {
+  const { error } = await supabase.from('events').insert([{ title, day, start, end }]);
+  if (error) {
+    console.error('Error al agregar evento', error);
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  fetchAndRender();
+  setupRealtime();
+});
