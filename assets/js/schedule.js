@@ -16,6 +16,20 @@ const events = [
 ];
 
 const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+// Intenta cargar eventos desde Supabase; si no hay datos o falla, usa los locales ya definidos arriba
+async function fetchAndRender() {
+  try {
+    const { data, error } = await supabase.from('events').select('*');
+    if (error) throw error;
+
+    const fromCloud = Array.isArray(data) && data.length ? data : events; // 'events' = array por defecto de arriba
+    buildSchedule(fromCloud);
+  } catch (e) {
+    console.warn('No se pudo cargar eventos desde la nube; uso locales.', e);
+    buildSchedule(events);
+  }
+}
+
 
 function buildSchedule() {
   const grid = document.getElementById("schedule");
