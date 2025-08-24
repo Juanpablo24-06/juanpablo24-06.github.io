@@ -1,60 +1,96 @@
 <!doctype html>
 <html lang="es">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Informe de situación académica</title>
-    <meta name="description" content="Sitio estático publicado con GitHub Pages para presentar el informe de situación académica.">
-    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Sitio estático publicado con GitHub Pages para presentar el informe de situación académica." />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="container">
         <h1>Informe de situación académica</h1>
-        <p class="subtitle">Sitio estático — editable con HTML/Markdown</p>
+        <p class="subtitle">Subtítulo breve aquí</p>
+        <nav class="main-nav">
+          <a href="#inicio">Inicio</a>
+          <a href="#hoy">Hoy</a>
+          <a href="#semana">Semana</a>
+          <a href="#examenes">Exámenes</a>
+          <a href="#ruta">Ruta</a>
+        </nav>
       </div>
     </header>
 
     <main class="container">
-      <article class="card">
+      <section id="inicio" class="card">
         <h2>Resumen</h2>
-        <p>Coloca aquí un resumen de 3–5 líneas. Este sitio es estático (HTML/CSS/JS) y fue pensado para GitHub Pages.</p>
-      </article>
-
-      <article class="card">
-        <h2>Informe completo</h2>
-        <p>Pega el contenido del documento aquí. Puedes reemplazar todo este &lt;article&gt; por HTML generado a partir del DOCX o por Markdown convertido con Jekyll.</p>
-        <h3>Sección de ejemplo</h3>
         <ul>
-          <li>Objetivo</li>
-          <li>Antecedentes</li>
-          <li>Resultados / Estado</li>
-          <li>Próximos pasos</li>
+          <li></li>
+          <li></li>
+          <li></li>
         </ul>
-      </article>
-      <article class="card" id="semana">
-        <h2>Mi Horario Semanal</h2>
-        <div class="schedule-wrapper">
-          <div class="schedule-grid" id="schedule"></div>
-        </div>
-      </article>
+      </section>
 
-      <article class="card">
-        <h2>Contacto</h2>
-        <p>Actualiza con tu correo o redes si lo deseas.</p>
-      </article>
+      <section class="card">
+        <h2>¿Qué hice hasta ahora?</h2>
+        <p></p>
+      </section>
+
+      <section id="hoy" class="card">
+        <h2>¿Dónde estoy hoy?</h2>
+        <p></p>
+      </section>
+
+      <section id="semana" class="card">
+        <h2>¿Cómo se distribuye mi semana?</h2>
+        <div class="schedule-wrapper">
+          <div id="schedule" class="schedule-grid"></div>
+        </div>
+      </section>
+
+      <section id="examenes" class="card">
+        <h2>Fechas de exámenes</h2>
+        <div class="exam-subject">
+          <h3>Análisis Matemático</h3>
+          <p></p>
+        </div>
+        <div class="exam-subject">
+          <h3>Álgebra lineal</h3>
+          <p></p>
+        </div>
+        <div class="exam-subject">
+          <h3>Física de los sistemas de partículas</h3>
+          <p></p>
+        </div>
+        <div class="exam-subject">
+          <h3>Química</h3>
+          <p></p>
+        </div>
+      </section>
+
+      <section id="ruta" class="card">
+        <h2>¿Cuál es mi ruta de estudios?</h2>
+        <div class="ruta-diagrama"></div>
+        <p class="legend">✓ Aprobada · ■ Cursando · ● Regular con final · ○ Futura · ! A recursar</p>
+        <div id="ruta-estudios"></div>
+      </section>
     </main>
 
     <footer class="site-footer">
       <div class="container">
-        <small>Actualizado el <span id="updated"></span> · Publicado con GitHub Pages</small>
+        <small>Última actualización: <span id="updated"></span></small>
       </div>
     </footer>
 
     <script src="assets/js/schedule.js"></script>
-
+    <script src="assets/js/plan.js" defer></script>
     <script>
-      document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', { year:'numeric', month:'long', day:'numeric' });
+      document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
     </script>
   </body>
 </html>
