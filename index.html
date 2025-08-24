@@ -84,28 +84,29 @@
           </div>
         </section>
 
-        <section id="ruta" class="card">
-          <h2>¿Cuál es mi ruta de estudios?</h2>
-          <p class="legend">✓ Aprobada · ■ Cursando · ● Regular con final · ○ Futura · ! A recursar</p>
-          <div id="ruta-estudios"></div>
-        </section>
-      </div>
-    </main>
+          <section id="ruta" class="card">
+            <h2>¿Cuál es mi ruta de estudios?</h2>
+            <p class="legend">✓ Aprobada · ■ Cursando · ● Regular con final · ○ Futura · ! A recursar</p>
+            <div id="ruta-estudios"></div>
+          </section>
+        </div>
+      </main>
 
-    <footer class="site-footer">
+      <footer class="site-footer">
       <div class="container">
         <small>Última actualización: <span id="updated"></span></small>
       </div>
     </footer>
 
     <script src="assets/js/schedule.js"></script>
-    <script type="module" src="assets/js/app.js"></script>
-<script>
-  document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-</script>
-  </body>
-</html>
+      <script type="module" src="assets/js/app.js"></script>
+      <div id="toast" class="toast" hidden></div>
+ <script>
+    document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  </script>
+    </body>
+  </html>
