@@ -1,18 +1,17 @@
+// app.js - Manejo de autenticación y plan de estudios
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Claves públicas de Supabase (cámbialas por las tuyas si es necesario)
+// --- Constantes de Supabase (reemplaza con las tuyas) ---
 const SUPABASE_URL = 'https://njzzuqdnigafpymgvizr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qenp1cWRuaWdhZnB5bWd2aXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNTE1NjQsImV4cCI6MjA3MTYyNzU2NH0.eq_o2LFRxX2tLMvXpkc-jJFuzIX_orjBFAoWWyAVqt8';
+const VIEWER_EMAIL = 'viewer@fiuba.local';
+const ADMIN_EMAIL = 'juanpablo20240604@gmail.com';
+const ADMIN_UUID = 'e6c2299b-a401-40b2-8af9-550cd0d8c2cc';
 
 // Inicializa el cliente
-export let supabase;
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-export function initSupabase() {
-  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  return supabase;
-}
-
-// Estados posibles
+// Estados para los selects
 const states = [
   { value: 'aprobada', label: 'Aprobada' },
   { value: 'cursando', label: 'Cursando' },
@@ -21,162 +20,93 @@ const states = [
   { value: 'recursar', label: 'A recursar' }
 ];
 
-// Mapa de elementos por course_id
+// Referencias y variables de estado
 const subjectElements = new Map();
 let planChannel = null;
+let isAdmin = false;
 
-// Muestra un mensaje breve
-function toast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
+// Elementos del DOM
+const viewerForm = document.getElementById('viewer-form');
+const adminForm = document.getElementById('admin-form');
+const showAdminBtn = document.getElementById('show-admin-btn');
+const authMsg = document.getElementById('auth-msg');
+const signOutBtn = document.getElementById('signout-btn');
+
+function showError(msg) {
+  authMsg.textContent = msg;
 }
-
-// Obtiene el usuario actual
-export async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-}
-
-// Maneja el retorno del magic link
-export async function handleRedirect() {
-  const params = new URLSearchParams(location.search);
-  const code = params.get('code');
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(location.href);
-    if (error) console.error('AUTH:', error);
-    history.replaceState(null, '', '/');
-  }
-}
-
-// Obtiene la sesión actual
-export async function getSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session;
-}
-
-// Descarga cursos
-export async function fetchCourses() {
-    const { data, error } = await supabase
-      .from('courses')
-      .select('id,name,year,cuat,pos')
-      .order('year')
-      .order('cuat')
-      .order('pos');
-    if (error) {
-      console.error('DB:', error);
-      toast(error.message);
-      return [];
-    }
-    return data || [];
-  }
-
-// Carga el plan para el usuario
-export async function loadPlan(user) {
-    const courses = await fetchCourses();
-    renderCourses(courses);
-    const { data: entries, error } = await supabase
-      .from('plan_entries')
-      .select('course_id,status')
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('DB:', error);
-      toast(error.message);
-      return;
-    }
-    (entries || []).forEach((row) => {
-      const elem = subjectElements.get(row.course_id);
-      if (!elem) return;
-      elem.select.value = row.status;
-      elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
-      elem.pill.classList.add(`estado-${row.status}`);
-    });
-  }
-
-// Hace upsert del estado
-export async function upsertPlanEntry(courseId, status) {
-  const user = await getCurrentUser();
-  const { error } = await supabase
-    .from('plan_entries')
-    .upsert({ user_id: user.id, course_id: courseId, status });
-  if (error) {
-    console.error('DB:', error);
-    throw error;
-  }
-}
-
-// Suscribe a cambios en tiempo real
-export function subscribeRealtime(user) {
-  planChannel?.unsubscribe();
-  planChannel = supabase
-    .channel('public:plan_entries')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'plan_entries', filter: `user_id=eq.${user.id}` },
-      (payload) => {
-        const data = payload.new ?? payload.old;
-        const courseId = data.course_id;
-        const status = payload.eventType === 'DELETE' ? 'futura' : data.status;
-        const elem = subjectElements.get(courseId);
-        if (!elem) return;
-        elem.select.value = status;
-        elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
-        elem.pill.classList.add(`estado-${status}`);
-      }
-    )
-    .subscribe();
-}
-
-// Renderiza el formulario de login
-export function handleLogin() {
-  const form = document.getElementById('login-form');
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: 'https://juanpablo24-06.github.io/',
-        shouldCreateUser: true
-      }
-    });
-    const msg = document.getElementById('auth-msg');
-    msg.textContent = error ? error.message : 'Enviado, revisa tu correo.';
-    if (error) console.error('AUTH:', error);
-  });
-  const signOutBtn = document.getElementById('signout-btn');
-  signOutBtn?.addEventListener('click', async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error('AUTH:', error);
-  });
+function clearError() {
+  authMsg.textContent = '';
 }
 
 // Muestra/oculta vistas
 function showLogin() {
   document.getElementById('login-view').hidden = false;
   document.getElementById('app-view').hidden = true;
-  document.getElementById('signout-btn').hidden = true;
+  signOutBtn.hidden = true;
 }
 function showApp() {
   document.getElementById('login-view').hidden = true;
   document.getElementById('app-view').hidden = false;
-  document.getElementById('signout-btn').hidden = false;
+  signOutBtn.hidden = false;
 }
 
-// Renderiza los cursos y selects
+// Deshabilita o habilita selects
+function setEditing(enable) {
+  subjectElements.forEach(({ select }) => {
+    select.disabled = !enable;
+  });
+}
+
+// Descarga cursos y plan
+async function fetchCourses() {
+  const { data, error } = await supabase
+    .from('courses')
+    .select('id,name,year,cuat,pos')
+    .order('year')
+    .order('cuat')
+    .order('pos');
+  if (error) {
+    console.error('DB:', error);
+    return [];
+  }
+  return data || [];
+}
+
+async function loadPlan() {
+  const courses = await fetchCourses();
+  renderCourses(courses);
+  const { data: entries, error } = await supabase
+    .from('plan_entries')
+    .select('course_id,status')
+    .eq('user_id', ADMIN_UUID);
+  if (error) {
+    console.error('DB:', error);
+    return;
+  }
+  (entries || []).forEach((row) => {
+    const elem = subjectElements.get(row.course_id);
+    if (!elem) return;
+    elem.select.value = row.status;
+    elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
+    elem.pill.classList.add(`estado-${row.status}`);
+  });
+}
+
+// Renderiza cursos y sus selects
 function renderCourses(courses) {
   const container = document.getElementById('ruta-estudios');
   if (!container) return;
   container.innerHTML = '';
   subjectElements.clear();
+
   const grouped = {};
   courses.forEach((c) => {
     grouped[c.year] = grouped[c.year] || {};
     grouped[c.year][c.cuat] = grouped[c.year][c.cuat] || [];
     grouped[c.year][c.cuat].push(c);
   });
+
   Object.keys(grouped)
     .sort((a, b) => a - b)
     .forEach((year) => {
@@ -221,7 +151,7 @@ function renderCourses(courses) {
             select.appendChild(opt);
           });
           select.value = 'futura';
-          select.setAttribute('aria-label', `${course.name} — Futura`);
+          select.disabled = !isAdmin;
           select.addEventListener('change', async () => {
             const status = select.value;
             pill.classList.remove(...states.map((s) => `estado-${s.value}`));
@@ -229,7 +159,7 @@ function renderCourses(courses) {
             try {
               await upsertPlanEntry(course.id, status);
             } catch (err) {
-              toast(err.message);
+              console.error('DB:', err);
             }
           });
           pill.appendChild(select);
@@ -243,31 +173,108 @@ function renderCourses(courses) {
     });
 }
 
-// Inicializa la app
+// Inserta/actualiza el plan
+async function upsertPlanEntry(courseId, status) {
+  const { error } = await supabase
+    .from('plan_entries')
+    .upsert({ user_id: ADMIN_UUID, course_id: courseId, status });
+  if (error) {
+    console.error('DB:', error);
+    throw error;
+  }
+}
+
+// Realtime para plan_entries
+function subscribeRealtime() {
+  planChannel?.unsubscribe();
+  planChannel = supabase
+    .channel('public:plan_entries')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'plan_entries' },
+      (payload) => {
+        const data = payload.new ?? payload.old;
+        if (data.user_id !== ADMIN_UUID) return;
+        const courseId = data.course_id;
+        const status = payload.eventType === 'DELETE' ? 'futura' : data.status;
+        const elem = subjectElements.get(courseId);
+        if (!elem) return;
+        elem.select.value = status;
+        elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
+        elem.pill.classList.add(`estado-${status}`);
+        console.log('RT:', payload.eventType, courseId, status);
+      }
+    )
+    .subscribe();
+}
+
 async function initialize() {
-  const user = await getCurrentUser();
-  if (!user) return;
-  await loadPlan(user);
-  subscribeRealtime(user);
+  await loadPlan();
+  subscribeRealtime();
+  setEditing(isAdmin);
 }
 
-// Inicio
-initSupabase();
-handleLogin();
-await handleRedirect();
-const session = await getSession();
-if (session) {
-  showApp();
-  await initialize();
-} else {
-  showLogin();
-}
-
-supabase.auth.onAuthStateChange(async (_evt, sess) => {
-  if (sess) {
-    showApp();
+// Manejo de sesiones
+async function handleSession(session) {
+  if (session) {
+    isAdmin = session.user.email === ADMIN_EMAIL;
     await initialize();
+    showApp();
   } else {
     showLogin();
   }
+}
+
+// Eventos de login
+viewerForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearError();
+  const pw = document.getElementById('pw-viewer').value;
+  const { error } = await supabase.auth.signInWithPassword({
+    email: VIEWER_EMAIL,
+    password: pw,
+  });
+  if (error) {
+    console.error('AUTH:', error);
+    showError('Contraseña incorrecta');
+    return;
+  }
+  console.log('AUTH: viewer login OK');
 });
+
+showAdminBtn?.addEventListener('click', () => {
+  adminForm.hidden = !adminForm.hidden;
+});
+
+adminForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearError();
+  const pw = document.getElementById('pw-admin').value;
+  const { error } = await supabase.auth.signInWithPassword({
+    email: ADMIN_EMAIL,
+    password: pw,
+  });
+  if (error) {
+    console.error('AUTH:', error);
+    showError('Contraseña incorrecta');
+    return;
+  }
+  console.log('AUTH: admin login OK');
+});
+
+signOutBtn?.addEventListener('click', async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) console.error('AUTH:', error);
+  console.log('AUTH: signed out');
+});
+
+// Inicio: revisa si hay sesión
+const {
+  data: { session }
+} = await supabase.auth.getSession();
+handleSession(session);
+
+supabase.auth.onAuthStateChange((_evt, sess) => {
+  handleSession(sess);
+});
+
