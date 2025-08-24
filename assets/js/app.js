@@ -1,12 +1,12 @@
 // app.js - Manejo de autenticación y plan de estudios
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// --- Constantes de Supabase (reemplaza con las tuyas) ---
+// --- Constantes de Supabase y cuentas ---
 const SUPABASE_URL = 'https://njzzuqdnigafpymgvizr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qenp1cWRuaWdhZnB5bWd2aXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNTE1NjQsImV4cCI6MjA3MTYyNzU2NH0.eq_o2LFRxX2tLMvXpkc-jJFuzIX_orjBFAoWWyAVqt8';
-const VIEWER_EMAIL = 'viewer@fiuba.local';
-const ADMIN_EMAIL = 'juanpablo20240604@gmail.com';
-const ADMIN_UUID = 'e6c2299b-a401-40b2-8af9-550cd0d8c2cc';
+const VIEWER_EMAIL = 'viewer@fiuba.local';   // cuenta compartida
+const ADMIN_EMAIL = 'juanpablo20240604@gmail.com'; // correo del editor
+const ADMIN_UUID = 'e6c2299b-a401-40b2-8af9-550cd0d8c2cc';      // uuid del admin
 
 // Inicializa el cliente
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -23,32 +23,47 @@ const states = [
 // Referencias y variables de estado
 const subjectElements = new Map();
 let planChannel = null;
-let isAdmin = false;
+let mode = null; // 'viewer' | 'admin'
 
 // Elementos del DOM
+const loginView = document.getElementById('login-view');
+const appView = document.getElementById('app-view');
+const signOutBtn = document.getElementById('signout-btn');
+const modeBadge = document.getElementById('mode-badge');
+const tabButtons = document.querySelectorAll('[role="tab"]');
 const viewerForm = document.getElementById('viewer-form');
 const adminForm = document.getElementById('admin-form');
-const showAdminBtn = document.getElementById('show-admin-btn');
-const authMsg = document.getElementById('auth-msg');
-const signOutBtn = document.getElementById('signout-btn');
+const viewerError = document.getElementById('viewer-error');
+const adminError = document.getElementById('admin-error');
+const updatedEl = document.getElementById('updated');
 
-function showError(msg) {
-  authMsg.textContent = msg;
+function showToast(msg, type = 'info') {
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
-function clearError() {
-  authMsg.textContent = '';
+
+function setMode(newMode) {
+  mode = newMode;
+  modeBadge.textContent = newMode === 'admin' ? 'Modo editor' : 'Modo lectura';
+  modeBadge.className = `badge${newMode === 'admin' ? ' admin' : ''}`;
+  setEditing(newMode === 'admin');
 }
 
 // Muestra/oculta vistas
 function showLogin() {
-  document.getElementById('login-view').hidden = false;
-  document.getElementById('app-view').hidden = true;
+  loginView.hidden = false;
+  appView.hidden = true;
   signOutBtn.hidden = true;
+  modeBadge.hidden = true;
 }
 function showApp() {
-  document.getElementById('login-view').hidden = true;
-  document.getElementById('app-view').hidden = false;
+  loginView.hidden = true;
+  appView.hidden = false;
   signOutBtn.hidden = false;
+  modeBadge.hidden = false;
 }
 
 // Deshabilita o habilita selects
@@ -56,6 +71,122 @@ function setEditing(enable) {
   subjectElements.forEach(({ select }) => {
     select.disabled = !enable;
   });
+}
+
+// renderiza pestañas y toggles de contraseña
+function renderAuthPanel() {
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => activateTab(btn));
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const dir = e.key === 'ArrowRight' ? 1 : -1;
+        const buttons = Array.from(tabButtons);
+        const idx = buttons.indexOf(btn);
+        const next = (idx + dir + buttons.length) % buttons.length;
+        buttons[next].focus();
+        activateTab(buttons[next]);
+        e.preventDefault();
+      }
+    });
+  });
+
+  function activateTab(active) {
+    tabButtons.forEach((btn) => {
+      const selected = btn === active;
+      btn.setAttribute('aria-selected', selected);
+      document.getElementById(btn.getAttribute('aria-controls')).hidden = !selected;
+    });
+  }
+
+  document.querySelectorAll('.pw-wrapper').forEach((wrap) => {
+    const input = wrap.querySelector('input');
+    const toggle = wrap.querySelector('.toggle-pw');
+    toggle.addEventListener('click', () => {
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      toggle.textContent = show ? '🙈' : '👁️';
+      toggle.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+  });
+}
+
+// login del viewer
+async function loginViewer(e) {
+  e.preventDefault();
+  viewerError.textContent = '';
+  const btn = document.getElementById('viewer-submit');
+  btn.disabled = true;
+  btn.textContent = 'Entrando…';
+  const pw = document.getElementById('pw-viewer').value;
+  const { error } = await supabase.auth.signInWithPassword({ email: VIEWER_EMAIL, password: pw });
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+  if (error) {
+    viewerError.textContent = 'Contraseña incorrecta';
+    return;
+  }
+}
+
+// login del admin
+async function loginAdmin(e) {
+  e.preventDefault();
+  adminError.textContent = '';
+  const btn = document.getElementById('admin-submit');
+  btn.disabled = true;
+  btn.textContent = 'Entrando…';
+  const pw = document.getElementById('pw-admin').value;
+  const { error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password: pw });
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+  if (error) {
+    adminError.textContent = 'Contraseña incorrecta';
+    return;
+  }
+}
+
+// cierra sesión
+async function logout() {
+  await supabase.auth.signOut();
+}
+
+// consulta última actualización
+async function updateLastUpdated() {
+  const { data, error } = await supabase
+    .from('plan_entries')
+    .select('updated_at')
+    .eq('user_id', ADMIN_UUID)
+    .order('updated_at', { ascending: false })
+    .limit(1);
+  if (error || !data || !data.length) {
+    updatedEl.textContent = '—';
+    return;
+  }
+  updatedEl.textContent = new Date(data[0].updated_at).toLocaleDateString('es-AR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+// restaura sesión al cargar
+async function restoreSession() {
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+  await handleSession(session);
+  supabase.auth.onAuthStateChange((_evt, sess) => handleSession(sess));
+}
+
+async function handleSession(session) {
+  if (session) {
+    const isAdm = session.user.id === ADMIN_UUID || session.user.email === ADMIN_EMAIL;
+    setMode(isAdm ? 'admin' : 'viewer');
+    await initialize();
+    showApp();
+  } else {
+    showLogin();
+    setMode('viewer');
+  }
 }
 
 // Descarga cursos y plan
@@ -151,7 +282,7 @@ function renderCourses(courses) {
             select.appendChild(opt);
           });
           select.value = 'futura';
-          select.disabled = !isAdmin;
+          select.disabled = mode !== 'admin';
           select.addEventListener('change', async () => {
             const status = select.value;
             pill.classList.remove(...states.map((s) => `estado-${s.value}`));
@@ -180,8 +311,11 @@ async function upsertPlanEntry(courseId, status) {
     .upsert({ user_id: ADMIN_UUID, course_id: courseId, status });
   if (error) {
     console.error('DB:', error);
+    showToast('Error al guardar', 'err');
     throw error;
   }
+  showToast('Guardado', 'ok');
+  updateLastUpdated();
 }
 
 // Realtime para plan_entries
@@ -202,6 +336,7 @@ function subscribeRealtime() {
         elem.select.value = status;
         elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
         elem.pill.classList.add(`estado-${status}`);
+        updateLastUpdated();
         console.log('RT:', payload.eventType, courseId, status);
       }
     )
@@ -211,70 +346,16 @@ function subscribeRealtime() {
 async function initialize() {
   await loadPlan();
   subscribeRealtime();
-  setEditing(isAdmin);
+  await updateLastUpdated();
 }
 
-// Manejo de sesiones
-async function handleSession(session) {
-  if (session) {
-    isAdmin = session.user.email === ADMIN_EMAIL;
-    await initialize();
-    showApp();
-  } else {
-    showLogin();
-  }
-}
+// Eventos de UI
+viewerForm?.addEventListener('submit', loginViewer);
+adminForm?.addEventListener('submit', loginAdmin);
+signOutBtn?.addEventListener('click', logout);
 
-// Eventos de login
-viewerForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  clearError();
-  const pw = document.getElementById('pw-viewer').value;
-  const { error } = await supabase.auth.signInWithPassword({
-    email: VIEWER_EMAIL,
-    password: pw,
-  });
-  if (error) {
-    console.error('AUTH:', error);
-    showError('Contraseña incorrecta');
-    return;
-  }
-  console.log('AUTH: viewer login OK');
-});
-
-showAdminBtn?.addEventListener('click', () => {
-  adminForm.hidden = !adminForm.hidden;
-});
-
-adminForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  clearError();
-  const pw = document.getElementById('pw-admin').value;
-  const { error } = await supabase.auth.signInWithPassword({
-    email: ADMIN_EMAIL,
-    password: pw,
-  });
-  if (error) {
-    console.error('AUTH:', error);
-    showError('Contraseña incorrecta');
-    return;
-  }
-  console.log('AUTH: admin login OK');
-});
-
-signOutBtn?.addEventListener('click', async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) console.error('AUTH:', error);
-  console.log('AUTH: signed out');
-});
-
-// Inicio: revisa si hay sesión
-const {
-  data: { session }
-} = await supabase.auth.getSession();
-handleSession(session);
-
-supabase.auth.onAuthStateChange((_evt, sess) => {
-  handleSession(sess);
-});
+// Inicio
+renderAuthPanel();
+updateLastUpdated();
+restoreSession();
 
