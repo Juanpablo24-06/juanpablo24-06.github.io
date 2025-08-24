@@ -10,8 +10,10 @@
   <body>
     <header class="site-header">
       <div class="container">
-        <h1>Informe de situación académica</h1>
-        <p class="subtitle">Subtítulo breve aquí</p>
+        <div class="hero">
+          <h1>Informe de situación académica</h1>
+          <p class="subtitle">Subtítulo breve aquí</p>
+        </div>
         <nav class="main-nav">
           <a href="#inicio">Inicio</a>
           <a href="#hoy">Hoy</a>
@@ -19,22 +21,41 @@
           <a href="#examenes">Exámenes</a>
           <a href="#ruta">Ruta</a>
         </nav>
-        <button id="signout-btn" hidden>Salir</button>
+        <div class="session-bar">
+          <span id="mode-badge" class="badge" hidden></span>
+          <button id="signout-btn" hidden>Cerrar sesión</button>
+        </div>
       </div>
     </header>
     <main class="container">
       <section id="login-view" class="card">
         <h2>Ingresar</h2>
-        <form id="viewer-form">
-          <input type="password" id="pw-viewer" placeholder="Contraseña" />
-          <button type="submit">Entrar</button>
-        </form>
-        <button id="show-admin-btn" type="button">Entrar como editor</button>
-        <form id="admin-form" hidden>
-          <input type="password" id="pw-admin" placeholder="Contraseña editor" />
-          <button type="submit">Entrar</button>
-        </form>
-        <div id="auth-msg"></div>
+        <div class="tabs" role="tablist">
+          <button id="tab-viewer" role="tab" aria-controls="panel-viewer" aria-selected="true">Ver</button>
+          <button id="tab-admin" role="tab" aria-controls="panel-admin" aria-selected="false">Editor</button>
+        </div>
+        <div id="panel-viewer" role="tabpanel">
+          <form id="viewer-form">
+            <label for="pw-viewer">Contraseña</label>
+            <div class="pw-wrapper">
+              <input type="password" id="pw-viewer" autocomplete="current-password" />
+              <button type="button" class="toggle-pw" aria-label="Mostrar contraseña">👁️</button>
+            </div>
+            <div id="viewer-error" class="field-error"></div>
+            <button type="submit" id="viewer-submit">Entrar</button>
+          </form>
+        </div>
+        <div id="panel-admin" role="tabpanel" hidden>
+          <form id="admin-form">
+            <label for="pw-admin">Contraseña</label>
+            <div class="pw-wrapper">
+              <input type="password" id="pw-admin" autocomplete="current-password" />
+              <button type="button" class="toggle-pw" aria-label="Mostrar contraseña">👁️</button>
+            </div>
+            <div id="admin-error" class="field-error"></div>
+            <button type="submit" id="admin-submit">Entrar</button>
+          </form>
+        </div>
       </section>
 
       <div id="app-view" hidden>
@@ -100,12 +121,5 @@
 
     <script src="assets/js/schedule.js"></script>
     <script type="module" src="assets/js/app.js"></script>
-<script>
-  document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-</script>
   </body>
 </html>
