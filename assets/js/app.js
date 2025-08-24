@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Claves públicas de Supabase
+// Claves públicas de Supabase (cámbialas por las tuyas si es necesario)
 const SUPABASE_URL = 'https://njzzuqdnigafpymgvizr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qenp1cWRuaWdhZnB5bWd2aXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNTE1NjQsImV4cCI6MjA3MTYyNzU2NH0.eq_o2LFRxX2tLMvXpkc-jJFuzIX_orjBFAoWWyAVqt8';
 
@@ -45,8 +45,9 @@ export async function handleRedirect() {
   const params = new URLSearchParams(location.search);
   const code = params.get('code');
   if (code) {
-    await supabase.auth.exchangeCodeForSession(location.href);
-    history.replaceState({}, document.title, location.pathname + location.hash);
+    const { error } = await supabase.auth.exchangeCodeForSession(location.href);
+    if (error) console.error('AUTH:', error);
+    history.replaceState(null, '', '/');
   }
 }
 
@@ -58,35 +59,41 @@ export async function getSession() {
 
 // Descarga cursos
 export async function fetchCourses() {
-  const { data, error } = await supabase
-    .from('courses')
-    .select('id,name,year,cuat,pos')
-    .order('year')
-    .order('cuat')
-    .order('pos');
-  if (error) {
-    toast(error.message);
-    return [];
+    const { data, error } = await supabase
+      .from('courses')
+      .select('id,name,year,cuat,pos')
+      .order('year')
+      .order('cuat')
+      .order('pos');
+    if (error) {
+      console.error('DB:', error);
+      toast(error.message);
+      return [];
+    }
+    return data || [];
   }
-  return data || [];
-}
 
 // Carga el plan para el usuario
 export async function loadPlan(user) {
-  const courses = await fetchCourses();
-  renderCourses(courses);
-  const { data: entries } = await supabase
-    .from('plan_entries')
-    .select('course_id,status')
-    .eq('user_id', user.id);
-  (entries || []).forEach((row) => {
-    const elem = subjectElements.get(row.course_id);
-    if (!elem) return;
-    elem.select.value = row.status;
-    elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
-    elem.pill.classList.add(`estado-${row.status}`);
-  });
-}
+    const courses = await fetchCourses();
+    renderCourses(courses);
+    const { data: entries, error } = await supabase
+      .from('plan_entries')
+      .select('course_id,status')
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('DB:', error);
+      toast(error.message);
+      return;
+    }
+    (entries || []).forEach((row) => {
+      const elem = subjectElements.get(row.course_id);
+      if (!elem) return;
+      elem.select.value = row.status;
+      elem.pill.classList.remove(...states.map((s) => `estado-${s.value}`));
+      elem.pill.classList.add(`estado-${row.status}`);
+    });
+  }
 
 // Hace upsert del estado
 export async function upsertPlanEntry(courseId, status) {
@@ -94,7 +101,10 @@ export async function upsertPlanEntry(courseId, status) {
   const { error } = await supabase
     .from('plan_entries')
     .upsert({ user_id: user.id, course_id: courseId, status });
-  if (error) throw error;
+  if (error) {
+    console.error('DB:', error);
+    throw error;
+  }
 }
 
 // Suscribe a cambios en tiempo real
@@ -121,18 +131,26 @@ export function subscribeRealtime(user) {
 
 // Renderiza el formulario de login
 export function handleLogin() {
-  const btn = document.getElementById('btn-login');
-  btn?.addEventListener('click', async () => {
+  const form = document.getElementById('login-form');
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
     const email = document.getElementById('email').value;
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: 'https://juanpablo24-06.github.io/' }
+      options: {
+        emailRedirectTo: 'https://juanpablo24-06.github.io/',
+        shouldCreateUser: true
+      }
     });
-    const msg = document.getElementById('auth-error');
-    msg.textContent = error ? error.message : 'Enlace enviado. Revisa tu correo.';
+    const msg = document.getElementById('auth-msg');
+    msg.textContent = error ? error.message : 'Enviado, revisa tu correo.';
+    if (error) console.error('AUTH:', error);
   });
   const signOutBtn = document.getElementById('signout-btn');
-  signOutBtn?.addEventListener('click', () => supabase.auth.signOut());
+  signOutBtn?.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error('AUTH:', error);
+  });
 }
 
 // Muestra/oculta vistas
