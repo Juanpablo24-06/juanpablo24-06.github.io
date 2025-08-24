@@ -87,7 +87,12 @@
     </footer>
 
     <script type="module" src="assets/js/schedule.js"></script>
-<script src="assets/js/plan.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = "YOUR_SUPABASE_URL";
+      const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    </script>
+    <script src="assets/js/plan.js" defer></script>
 <script>
   document.getElementById('updated').textContent = new Date().toLocaleDateString('es-AR', {
     year: 'numeric',
